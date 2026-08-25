@@ -1,6 +1,6 @@
 import { Button } from "@renderer/components/ui/button";
 
-function App(): React.JSX.Element {
+function App() {
   const ping = () => window.api.ping();
 
   return (

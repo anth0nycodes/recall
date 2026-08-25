@@ -10,6 +10,9 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.renderer.json}'
 asarUnpack:
   - resources/**
+extraResources:
+  - from: drizzle
+    to: drizzle
 mac:
   target:
     - dmg
