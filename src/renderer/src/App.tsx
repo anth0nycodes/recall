@@ -1,7 +1,7 @@
 import { Button } from "@renderer/components/ui/button";
 
 function App(): React.JSX.Element {
-  const ping = () => window.electron.ipcRenderer.send("ping");
+  const ping = () => window.api.ping();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background text-foreground">

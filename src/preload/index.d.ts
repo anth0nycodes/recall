@@ -1,8 +1,11 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+interface RecallAPI {
+  ping: () => void;
+}
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    api: RecallAPI;
   }
 }
+
+export {};
