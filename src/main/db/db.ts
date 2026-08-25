@@ -10,6 +10,9 @@ if (is.dev) {
   app.setPath("userData", join(app.getPath("appData"), "recall-dev"));
 }
 
+// resolves to whatever was set above:
+// dev -> ~/Library/Application Support/recall-dev
+// default/packaged -> ~/Library/Application Support/Recall
 const userDataDir = app.getPath("userData");
 await mkdir(userDataDir, { recursive: true });
 
