@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "1.0.0-rc.4",
     "lucide-react": "^1.34.0",
+    "node-mac-contacts": "^1.7.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwind-merge": "^3.6.0"
