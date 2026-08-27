@@ -26,6 +26,8 @@
     "@base-ui/react": "^1.7.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@parseaple/typedstream": "^2.0.2",
+    "@photon-ai/imessage-kit": "^2.1.2",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -59,7 +61,8 @@
     "onlyBuiltDependencies": [
       "electron",
       "esbuild",
-      "electron-winstaller"
+      "electron-winstaller",
+      "better-sqlite3"
     ]
   }
 }

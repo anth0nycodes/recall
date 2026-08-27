@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `onboarding_step` text DEFAULT 'welcome' NOT NULL;
