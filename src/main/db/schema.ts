@@ -25,6 +25,11 @@ export const people = sqliteTable("people", {
   jobTitle: text("job_title"),
 });
 
+export const ingestionState = sqliteTable("ingestion_state", {
+  id: integer("id").primaryKey(),
+  lastRowId: integer("last_row_id").notNull().default(0),
+});
+
 export const messages = sqliteTable("messages", {
   id: integer("id").primaryKey(),
   guid: text("guid").notNull().unique(),

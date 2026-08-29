@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import Database from "better-sqlite3";
-import { messages } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { ingestionState, messages } from "../db/schema";
 import {
   convertAppleTimestampToUnix,
   decodeMessageBuffer,
@@ -26,7 +27,12 @@ const chatDBPath = `${homedir()}/Library/Messages/chat.db`;
 const sqliteDB = new Database(chatDBPath, { readonly: true });
 
 const BATCH_SIZE = 2500;
-let lastRowId = 0;
+const state = db
+  .select()
+  .from(ingestionState)
+  .where(eq(ingestionState.id, 1))
+  .get();
+let lastRowId = state?.lastRowId ?? 0;
 
 const query = `
   SELECT
@@ -109,11 +115,16 @@ while (true) {
         .onConflictDoNothing()
         .run();
     }
-  });
 
-  lastRowId = rows[rows.length - 1].rowId;
-  // TODO(step 10, index_state): persist lastRowId here (inside/after the batch
-  // txn) so an interrupted run resumes from the last committed batch.
+    lastRowId = rows[rows.length - 1].rowId;
+    tx.insert(ingestionState)
+      .values({ id: 1, lastRowId })
+      .onConflictDoUpdate({
+        target: ingestionState.id,
+        set: { lastRowId },
+      })
+      .run();
+  });
 }
 
 // TODO(step 11, FTS5): after ingestion, index messageContent into an FTS5
