@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { ingestionState, messages } from "../db/schema";
 import {
   convertAppleTimestampToUnix,
@@ -63,6 +63,46 @@ const query = `
 const stmt = sqliteDB.prepare(query);
 const meId = findOrCreatePerson("Me");
 const unknownId = findOrCreatePerson("Unknown");
+
+// --- FTS5 setup (idempotent; runs before the loop so inserts hit the triggers) ---
+// External-content mode: the index points back to `messages` by id,
+// storing no second copy of the text.
+db.run(
+  sql.raw(`
+  CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+    message_content,
+    content='messages',
+    content_rowid='id'
+  )
+`)
+);
+// Triggers keep the index in sync as rows change — no full rebuild each run.
+db.run(
+  sql.raw(`
+  CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN
+    INSERT INTO messages_fts(rowid, message_content)
+    VALUES (new.id, new.message_content);
+  END
+`)
+);
+db.run(
+  sql.raw(`
+  CREATE TRIGGER IF NOT EXISTS messages_ad AFTER DELETE ON messages BEGIN
+    INSERT INTO messages_fts(messages_fts, rowid, message_content)
+    VALUES ('delete', old.id, old.message_content);
+  END
+`)
+);
+db.run(
+  sql.raw(`
+  CREATE TRIGGER IF NOT EXISTS messages_au AFTER UPDATE ON messages BEGIN
+    INSERT INTO messages_fts(messages_fts, rowid, message_content)
+    VALUES ('delete', old.id, old.message_content);
+    INSERT INTO messages_fts(rowid, message_content)
+    VALUES (new.id, new.message_content);
+  END
+`)
+);
 
 while (true) {
   const rows = stmt.all({ lastRowId, BATCH_SIZE }) as MessageRow[];
@@ -127,7 +167,4 @@ while (true) {
   });
 }
 
-// TODO(step 11, FTS5): after ingestion, index messageContent into an FTS5
-// virtual table (messages_fts, content='messages', content_rowid='id') for
-// keyword search. Drizzle has no FTS5 support -> raw db.run() DDL + triggers.
 console.log("Ingestion completed!");
