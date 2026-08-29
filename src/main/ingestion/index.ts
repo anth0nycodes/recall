@@ -1,7 +1,8 @@
 import { homedir } from "node:os";
 import Database from "better-sqlite3";
 import { eq, sql } from "drizzle-orm";
-import { ingestionState, messages } from "../db/schema";
+import contacts from "node-mac-contacts";
+import { ingestionState, messages, people } from "../db/schema";
 import {
   convertAppleTimestampToUnix,
   decodeMessageBuffer,
@@ -168,3 +169,80 @@ while (true) {
 }
 
 console.log("Ingestion completed!");
+
+// --- Contacts enrichment ---
+const authStatus = contacts.getAuthStatus();
+if (authStatus !== "Authorized") {
+  console.log(`Contacts access: ${authStatus} — requesting…`);
+  await contacts.requestAccess();
+}
+
+const allContacts = contacts.getAllContacts([
+  "middleName",
+  "jobTitle",
+  "contactImage",
+]);
+console.log(`Fetched ${allContacts.length} contacts from the address book`);
+
+// Normalize a handle for matching. chat.db stores phones as E.164
+// (+18008888888) but contacts may store national format ((800) 888-8888) —
+// strip to digits and compare the last 10 so both sides line up. Emails just
+// lowercase. Both the map keys and the lookup use this, so formats can't drift.
+const normalizeHandle = (raw: string) =>
+  raw.includes("@") ? raw.toLowerCase() : raw.replace(/\D/g, "").slice(-10);
+
+interface Contact {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  nickname: string;
+  birthday: string;
+  jobTitle: string;
+  contactImage?: Buffer;
+  phoneNumbers: string[];
+  emailAddresses: string[];
+}
+const contactByHandle = new Map<string, Contact>();
+// On a key collision (duplicate contacts sharing a number/email), keep the
+// richer one — prefer whichever has a contact image so a later imageless
+// duplicate can't overwrite a photo.
+const setContact = (key: string, contact: Contact) => {
+  const existing = contactByHandle.get(key);
+  if (existing?.contactImage?.length && !contact.contactImage?.length) return;
+  contactByHandle.set(key, contact);
+};
+for (const contact of allContacts as Contact[]) {
+  for (const phone of contact.phoneNumbers ?? [])
+    setContact(normalizeHandle(phone), contact);
+  for (const email of contact.emailAddresses ?? [])
+    setContact(normalizeHandle(email), contact);
+}
+
+// The library returns "" for unset fields — store those as NULL instead.
+const clean = (value?: string) => value || null;
+
+const allPeople = db.select().from(people).all();
+let matched = 0;
+for (const person of allPeople) {
+  const contact = contactByHandle.get(normalizeHandle(person.handle));
+  if (!contact) continue; // non-contact -> leave fields NULL
+
+  console.log(
+    `Matched ${person.handle} → ${contact.firstName} ${contact.lastName}`
+  );
+  matched++;
+
+  db.update(people)
+    .set({
+      firstName: clean(contact.firstName),
+      middleName: clean(contact.middleName),
+      lastName: clean(contact.lastName),
+      nickname: clean(contact.nickname),
+      birthday: clean(contact.birthday),
+      jobTitle: clean(contact.jobTitle),
+      contactImage: contact.contactImage?.length ? contact.contactImage : null,
+    })
+    .where(eq(people.id, person.id))
+    .run();
+}
+console.log(`Enriched ${matched}/${allPeople.length} people from contacts`);
