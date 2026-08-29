@@ -63,7 +63,8 @@
       "electron",
       "esbuild",
       "electron-winstaller",
-      "better-sqlite3"
+      "better-sqlite3",
+      "node-mac-contacts"
     ]
   }
 }
