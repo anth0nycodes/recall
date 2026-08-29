@@ -26,11 +26,14 @@
     "@base-ui/react": "^1.7.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@parseaple/typedstream": "^2.0.2",
+    "@photon-ai/imessage-kit": "^2.1.2",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "1.0.0-rc.4",
     "lucide-react": "^1.34.0",
+    "node-mac-contacts": "^1.7.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwind-merge": "^3.6.0"
@@ -59,7 +62,8 @@
     "onlyBuiltDependencies": [
       "electron",
       "esbuild",
-      "electron-winstaller"
+      "electron-winstaller",
+      "better-sqlite3"
     ]
   }
 }
