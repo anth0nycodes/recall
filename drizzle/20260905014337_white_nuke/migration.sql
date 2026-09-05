@@ -1,0 +1,1 @@
+ALTER TABLE `ingestion_state` ADD `schema_version` integer DEFAULT 0 NOT NULL;

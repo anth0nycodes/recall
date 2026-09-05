@@ -21,6 +21,8 @@ interface MessageRow {
   handle: string | null;
   chatId: number;
   attachmentMime: string | null;
+  attachmentName: string | null;
+  isReply: number;
   isAudioMessage: number;
 }
 
@@ -28,13 +30,31 @@ const chatDBPath = `${homedir()}/Library/Messages/chat.db`;
 const sqliteDB = new Database(chatDBPath, { readonly: true });
 
 const BATCH_SIZE = 2500;
+
+// Bump when a schema change needs existing rows re-derived (e.g. a new column
+// filled from chat.db). A stored version below this forces one full rescan so
+// old rows get backfilled; matching versions keep the fast incremental cursor.
+const SCHEMA_VERSION = 1;
+
 const state = db
   .select()
   .from(ingestionState)
   .where(eq(ingestionState.id, 1))
   .get();
-let lastRowId = state?.lastRowId ?? 0;
+// On a version lag, restart from 0 so every message is re-read and upserted.
+const needsBackfill = (state?.schemaVersion ?? 0) < SCHEMA_VERSION;
+if (needsBackfill) {
+  console.log(
+    `Schema version ${state?.schemaVersion ?? 0} < ${SCHEMA_VERSION} — reindexing all messages`
+  );
+}
+let lastRowId = needsBackfill ? 0 : (state?.lastRowId ?? 0);
 
+// A message is a reply when it points back to a thread originator —
+// thread_originator_guid is non-null only on replies.
+//
+// For attachments, transfer_name is the original file name we surface as
+// the message_content instead of a generic placeholder.
 const query = `
   SELECT
     m.ROWID AS rowId,
@@ -46,13 +66,23 @@ const query = `
     h.id AS handle,
     cmj.chat_id AS chatId,
     m.is_audio_message AS isAudioMessage,
+    CASE WHEN m.thread_originator_guid IS NOT NULL THEN 1 ELSE 0 END AS isReply,
     CASE WHEN m.cache_has_attachments = 1 THEN (
       SELECT a.mime_type
       FROM message_attachment_join AS maj
       JOIN attachment AS a ON a.ROWID = maj.attachment_id
       WHERE maj.message_id = m.ROWID
+      ORDER BY maj.ROWID
       LIMIT 1
-    ) END AS attachmentMime
+    ) END AS attachmentMime,
+    CASE WHEN m.cache_has_attachments = 1 THEN (
+      SELECT a.transfer_name
+      FROM message_attachment_join AS maj
+      JOIN attachment AS a ON a.ROWID = maj.attachment_id
+      WHERE maj.message_id = m.ROWID
+      ORDER BY maj.ROWID
+      LIMIT 1
+    ) END AS attachmentName
   FROM message AS m
   LEFT JOIN handle AS h ON m.handle_id = h.ROWID
   INNER JOIN chat_message_join AS cmj ON cmj.message_id = m.ROWID
@@ -120,6 +150,8 @@ while (true) {
         handle,
         chatId,
         attachmentMime,
+        attachmentName,
+        isReply,
         isAudioMessage,
       } = row;
       let decodedMessage: string | null;
@@ -135,8 +167,12 @@ while (true) {
       // if nothing real is left, fall back to an attachment placeholder. Use
       // || (not ??) so an empty-after-cleaning string also triggers the fallback.
       const cleaned = decodedMessage?.replace(/￼/g, "").trim();
+      // For attachment-only messages, prefer the original file name; fall back
+      // to a placeholder when there's no name (e.g. expired audio messages).
       const messageContent =
-        cleaned || placeholderFor(attachmentMime, isAudioMessage);
+        cleaned ||
+        attachmentName ||
+        placeholderFor(attachmentMime, isAudioMessage);
       if (!messageContent) continue;
       const normalizedDate = convertAppleTimestampToUnix(sentAt);
       const personId = isFromMe
@@ -151,18 +187,29 @@ while (true) {
           chatId,
           isFromMe: Boolean(isFromMe),
           messageContent,
+          isReply: Boolean(isReply),
+          attachmentType: attachmentMime,
           sentAt: normalizedDate,
         })
-        .onConflictDoNothing()
+        // Upsert (not do-nothing) so a rescan refreshes derived columns on
+        // rows that already exist — this is what makes backfill work.
+        .onConflictDoUpdate({
+          target: messages.guid,
+          set: {
+            messageContent,
+            isReply: Boolean(isReply),
+            attachmentType: attachmentMime,
+          },
+        })
         .run();
     }
 
     lastRowId = rows[rows.length - 1].rowId;
     tx.insert(ingestionState)
-      .values({ id: 1, lastRowId })
+      .values({ id: 1, lastRowId, schemaVersion: SCHEMA_VERSION })
       .onConflictDoUpdate({
         target: ingestionState.id,
-        set: { lastRowId },
+        set: { lastRowId, schemaVersion: SCHEMA_VERSION },
       })
       .run();
   });
@@ -181,7 +228,7 @@ const allContacts = contacts.getAllContacts([
   "middleName",
   "jobTitle",
   "contactImage",
-]);
+]) as Contact[];
 console.log(`Fetched ${allContacts.length} contacts from the address book`);
 
 // Normalize a handle for matching. chat.db stores phones as E.164
@@ -202,6 +249,7 @@ interface Contact {
   phoneNumbers: string[];
   emailAddresses: string[];
 }
+
 const contactByHandle = new Map<string, Contact>();
 // On a key collision (duplicate contacts sharing a number/email), keep the
 // richer one — prefer whichever has a contact image so a later imageless
@@ -211,7 +259,8 @@ const setContact = (key: string, contact: Contact) => {
   if (existing?.contactImage?.length && !contact.contactImage?.length) return;
   contactByHandle.set(key, contact);
 };
-for (const contact of allContacts as Contact[]) {
+
+for (const contact of allContacts) {
   for (const phone of contact.phoneNumbers ?? [])
     setContact(normalizeHandle(phone), contact);
   for (const email of contact.emailAddresses ?? [])
@@ -223,6 +272,7 @@ const clean = (value?: string) => value || null;
 
 const allPeople = db.select().from(people).all();
 let matched = 0;
+
 for (const person of allPeople) {
   const contact = contactByHandle.get(normalizeHandle(person.handle));
   if (!contact) continue; // non-contact -> leave fields NULL
@@ -234,13 +284,14 @@ for (const person of allPeople) {
 
   db.update(people)
     .set({
+      isContact: true,
       firstName: clean(contact.firstName),
       middleName: clean(contact.middleName),
       lastName: clean(contact.lastName),
       nickname: clean(contact.nickname),
       birthday: clean(contact.birthday),
       jobTitle: clean(contact.jobTitle),
-      contactImage: contact.contactImage?.length ? contact.contactImage : null,
+      image: contact.contactImage?.length ? contact.contactImage : null,
     })
     .where(eq(people.id, person.id))
     .run();

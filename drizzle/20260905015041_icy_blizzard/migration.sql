@@ -1,0 +1,1 @@
+ALTER TABLE `people` RENAME COLUMN `contact_image` TO `image`;
