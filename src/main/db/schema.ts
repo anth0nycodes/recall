@@ -2,7 +2,8 @@ import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey(),
-  name: text("name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   onboardingStep: text("onboarding_step").notNull().default("welcome"),
   hasCompletedOnboarding: integer("has_completed_onboarding", {
     mode: "boolean",
@@ -14,11 +15,16 @@ export const users = sqliteTable("users", {
 export const people = sqliteTable("people", {
   id: integer("id").primaryKey(),
   handle: text("handle").notNull().unique(),
+  isContact: integer("is_contact", {
+    mode: "boolean",
+  })
+    .notNull()
+    .default(false),
   firstName: text("first_name"),
   middleName: text("middle_name"),
   lastName: text("last_name"),
   nickname: text("nickname"),
-  contactImage: blob("contact_image", {
+  image: blob("image", {
     mode: "buffer",
   }),
   birthday: text("birthday"),
@@ -28,6 +34,7 @@ export const people = sqliteTable("people", {
 export const ingestionState = sqliteTable("ingestion_state", {
   id: integer("id").primaryKey(),
   lastRowId: integer("last_row_id").notNull().default(0),
+  schemaVersion: integer("schema_version").notNull().default(0),
 });
 
 export const messages = sqliteTable("messages", {
@@ -41,6 +48,8 @@ export const messages = sqliteTable("messages", {
     mode: "boolean",
   }).notNull(),
   messageContent: text("message_content").notNull(),
+  isReply: integer("is_reply", { mode: "boolean" }).notNull().default(false),
+  attachmentType: text("attachment_type"),
   sentAt: integer("sent_at", {
     mode: "timestamp",
   }).notNull(),
