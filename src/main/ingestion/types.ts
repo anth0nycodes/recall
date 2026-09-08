@@ -1,4 +1,4 @@
-import { db } from "./recall-db";
+import { db } from "../db/db";
 
 export interface MessageRow {
   rowId: number;
