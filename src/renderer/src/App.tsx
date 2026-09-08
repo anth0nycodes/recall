@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { usersApi } from "./api/users";
 import { ErrorScreen } from "./components/error-screen";
 import { Home } from "./components/home";
-import { Onboarding } from "./components/onboarding";
+import { Onboarding } from "./components/onboarding/onboarding";
 import { Splash } from "./components/splash";
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
     refetch,
   } = useQuery({
     queryKey: ["user"],
-    queryFn: () => window.api.getUser(),
+    queryFn: () => usersApi.getUser(),
   });
 
   if (isPending) return <Splash />;

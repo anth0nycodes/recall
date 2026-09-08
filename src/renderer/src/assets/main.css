@@ -1,7 +1,22 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("./fonts/DMSans.ttf");
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("./fonts/Geist.ttf");
+}
+
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-geist: "Geist", sans-serif;
+}
 
 :root {
   --radius: 0.625rem;

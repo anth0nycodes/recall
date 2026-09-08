@@ -1,8 +1,8 @@
 import { join } from "path";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { usersApi } from "./api/users";
 import { runMigrations } from "./db/db";
-import { getUser } from "./helpers";
 import { runIngestion } from "./ingestion";
 
 function createWindow() {
@@ -45,7 +45,12 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  ipcMain.handle("get-user", () => getUser());
+  ipcMain.handle("get-user", () => usersApi.getUser());
+  ipcMain.handle(
+    "update-onboarding-step",
+    (_, stepName: string, hasCompletedOnboarding?: boolean) =>
+      usersApi.updateOnboardingStep(stepName, hasCompletedOnboarding)
+  );
 
   // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from
   // Contacts as its tail. Called by the onboarding button and, later, the
