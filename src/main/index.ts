@@ -1,8 +1,12 @@
 import { join } from "path";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { z } from "zod";
+import { UserInfoSchema } from "../schemas/UserInfoSchema";
+import { apiKeysApi } from "./api/api-keys";
+import { systemPermissionsApi } from "./api/system-permissions";
+import { usersApi } from "./api/users";
 import { runMigrations } from "./db/db";
-import { getUser } from "./helpers";
 import { runIngestion } from "./ingestion";
 
 function createWindow() {
@@ -12,6 +16,7 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
+      // TODO: make sure to disable devtools in the future for production
       preload: join(import.meta.dirname, "../preload/index.mjs"),
       sandbox: false,
     },
@@ -45,7 +50,43 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  ipcMain.handle("get-user", () => getUser());
+  // User API handlers
+  ipcMain.handle("get-user", () => usersApi.getUser());
+  ipcMain.handle(
+    "update-onboarding-step",
+    (_, stepName: string, hasCompletedOnboarding?: boolean) =>
+      usersApi.updateOnboardingStep(stepName, hasCompletedOnboarding)
+  );
+  ipcMain.handle(
+    "update-user-info",
+    (_, data: z.infer<typeof UserInfoSchema>) => usersApi.updateUserInfo(data)
+  );
+
+  // System permissions API handlers
+  ipcMain.handle("get-full-disk-access-status", () =>
+    systemPermissionsApi.getFullDiskAccessStatus()
+  );
+  ipcMain.handle("request-full-disk-access", () =>
+    systemPermissionsApi.requestFullDiskAccess()
+  );
+  ipcMain.handle("relaunch-app", () => systemPermissionsApi.relaunchApp());
+  ipcMain.handle("get-contacts-access-status", () =>
+    systemPermissionsApi.getContactsAccessStatus()
+  );
+  ipcMain.handle("request-contacts-access", () =>
+    systemPermissionsApi.requestContactsAccess()
+  );
+
+  // API key management handlers
+  ipcMain.handle("save-openrouter-api-key", (_, apiKey: string) =>
+    apiKeysApi.saveOpenRouterApiKey(apiKey)
+  );
+  ipcMain.handle("has-openrouter-api-key", () =>
+    apiKeysApi.hasOpenRouterApiKey()
+  );
+  ipcMain.handle("clear-openrouter-api-key", () =>
+    apiKeysApi.clearOpenRouterApiKey()
+  );
 
   // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from
   // Contacts as its tail. Called by the onboarding button and, later, the
