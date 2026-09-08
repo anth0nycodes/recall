@@ -1,7 +1,7 @@
 import { NSAttributedString, Unarchiver } from "@parseaple/typedstream";
 import { eq } from "drizzle-orm";
 import { people } from "../db/schema";
-import { db } from "./recall-db";
+import { db } from "../db/db";
 
 export function convertAppleTimestampToUnix(appleTimestamp: number) {
   const appleTimestampInMs = appleTimestamp / 1000000;

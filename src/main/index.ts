@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { runMigrations } from "./db/db";
+import { runIngestion } from "./ingestion";
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -45,6 +46,11 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on("ping", () => console.log("pong"));
+
+  // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from
+  // Contacts as its tail. Called by the onboarding button and, later, the
+  // new-message watcher.
+  ipcMain.handle("start-ingestion", () => runIngestion());
 
   // Apply pending DB migrations before any window/query runs.
   runMigrations();
