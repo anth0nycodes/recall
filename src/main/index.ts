@@ -1,7 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
-import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { electronApp, is, optimizer } from "@electron-toolkit/utils";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { runMigrations } from "./db/db";
+import { getUser } from "./helpers";
 import { runIngestion } from "./ingestion";
 
 function createWindow() {
@@ -44,8 +45,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  // IPC test
-  ipcMain.on("ping", () => console.log("pong"));
+  ipcMain.handle("get-user", () => getUser());
 
   // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from
   // Contacts as its tail. Called by the onboarding button and, later, the

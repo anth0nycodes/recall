@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 // Custom APIs for renderer
 const recallAPI = {
-  ping: () => ipcRenderer.send("ping"),
+  getUser: () => ipcRenderer.invoke("get-user"),
 };
 
 // Expose the API to the renderer via contextBridge (context isolation is on)

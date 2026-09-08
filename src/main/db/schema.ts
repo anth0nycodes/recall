@@ -2,8 +2,8 @@ import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   onboardingStep: text("onboarding_step").notNull().default("welcome"),
   hasCompletedOnboarding: integer("has_completed_onboarding", {
     mode: "boolean",
