@@ -1,7 +1,6 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { usersApi } from "@renderer/api/users";
-import { Button } from "@renderer/components/ui/button";
 import {
   Field,
   FieldError,
@@ -13,6 +12,8 @@ import { getErrorMessage } from "@renderer/utils/helpers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { UserInfoSchema } from "../../../../../schemas/UserInfoSchema";
+import { OnboardingButton } from "../onboarding-button";
+import { StepLayout } from "../step-layout";
 import { OnboardingStepProps } from "./types";
 
 export function UserInfo({ onNext }: OnboardingStepProps) {
@@ -46,80 +47,71 @@ export function UserInfo({ onNext }: OnboardingStepProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8">
-      <div className="flex flex-col items-center gap-6">
-        <div className="flex flex-col items-center gap-4">
-          <span className="text-center text-4xl font-medium">
-            First, what&apos;s your name?
-          </span>
-          <p className="font-geist text-muted-foreground text-center text-[20px]">
-            This helps personalize your experience.
-          </p>
-        </div>
-        <form
-          className="font-geist w-full"
-          id="user-info-form"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup className="flex w-full flex-row items-center justify-between gap-5">
-            <Controller
-              name="firstName"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel className="text-base" htmlFor="first-name">
-                    First Name
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    autoComplete="off"
-                    className={inputClasses}
-                    required
-                    id="first-name"
-                    type="text"
-                    placeholder="First name"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="lastName"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel className="text-base" htmlFor="last-name">
-                    Last Name
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    autoComplete="off"
-                    className={inputClasses}
-                    required
-                    id="last-name"
-                    type="text"
-                    placeholder="Last name"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
-      </div>
-      <Button
-        form="user-info-form"
-        type="submit"
-        className="font-geist px-5 py-2 text-lg"
+    <StepLayout
+      title="First, what's your name?"
+      description="This helps personalize your experience."
+      footer={
+        <OnboardingButton form="user-info-form" type="submit">
+          Continue
+        </OnboardingButton>
+      }
+    >
+      <form
+        className="font-geist w-full"
+        id="user-info-form"
+        onSubmit={form.handleSubmit(onSubmit)}
       >
-        Continue
-      </Button>
-    </div>
+        <FieldGroup className="flex w-full flex-row items-center justify-between gap-5">
+          <Controller
+            name="firstName"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel className="text-base" htmlFor="first-name">
+                  First Name
+                </FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="off"
+                  className={inputClasses}
+                  required
+                  id="first-name"
+                  type="text"
+                  placeholder="First name"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+          <Controller
+            name="lastName"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel className="text-base" htmlFor="last-name">
+                  Last Name
+                </FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="off"
+                  className={inputClasses}
+                  required
+                  id="last-name"
+                  type="text"
+                  placeholder="Last name"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGroup>
+      </form>
+    </StepLayout>
   );
 }
