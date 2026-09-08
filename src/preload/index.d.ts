@@ -1,5 +1,7 @@
+import { User } from "../types";
+
 interface RecallAPI {
-  ping: () => void;
+  getUser: () => Promise<User>;
 }
 
 declare global {
