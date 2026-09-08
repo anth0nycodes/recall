@@ -4,6 +4,7 @@
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.tsx",
     "src/types.ts",
+    "src/schemas/*.ts",
     "src/preload/*.d.ts"
   ],
   "compilerOptions": {

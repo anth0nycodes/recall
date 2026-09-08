@@ -10,7 +10,7 @@ export function Privacy({ onNext }: OnboardingStepProps) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-8">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-6">
         <div className="flex flex-col items-center gap-4">
           <span className="text-center text-4xl font-medium">
             Your messages stay on your Mac.

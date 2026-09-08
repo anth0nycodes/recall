@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { UserInfoSchema } from "../../schemas/UserInfoSchema";
 import { db } from "../db/db";
-import { users } from "../db/schema";
+import { people, users } from "../db/schema";
 
 export const usersApi = {
   getUser() {
@@ -19,5 +21,26 @@ export const usersApi = {
       })
       .where(eq(users.id, 1))
       .run();
+  },
+
+  updateUserInfo(data: z.infer<typeof UserInfoSchema>) {
+    const { firstName, lastName } = data;
+
+    db.transaction((tx) => {
+      tx.update(users)
+        .set({
+          firstName,
+          lastName,
+        })
+        .where(eq(users.id, 1))
+        .run();
+      tx.update(people)
+        .set({
+          firstName,
+          lastName,
+        })
+        .where(eq(people.handle, "Me"))
+        .run();
+    });
   },
 };

@@ -1,4 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { z } from "zod";
+import { UserInfoSchema } from "../schemas/UserInfoSchema";
 import { User } from "../types";
 
 // Custom APIs for renderer
@@ -13,6 +15,8 @@ const recallAPI = {
       stepName,
       hasCompletedOnboarding
     ),
+  updateUserInfo: (data: z.infer<typeof UserInfoSchema>): Promise<void> =>
+    ipcRenderer.invoke("update-user-info", data),
 };
 
 // Expose the API to the renderer via contextBridge (context isolation is on)

@@ -6,6 +6,7 @@ import { Splash } from "../splash";
 import { ProgressBar } from "./progress-bar";
 import { Privacy } from "./steps/privacy";
 import { OnboardingStepProps } from "./steps/types";
+import { UserInfo } from "./steps/user-info";
 import { Welcome } from "./steps/welcome";
 
 interface OnboardingStep {
@@ -52,6 +53,11 @@ export function Onboarding() {
       id: 1,
       stepName: "privacy",
       StepComponent: Privacy,
+    },
+    {
+      id: 2,
+      stepName: "name",
+      StepComponent: UserInfo,
     },
   ];
 
