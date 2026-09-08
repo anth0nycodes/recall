@@ -4,6 +4,7 @@ import { getErrorMessage } from "@renderer/utils/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Splash } from "../splash";
 import { ProgressBar } from "./progress-bar";
+import { Greeting } from "./steps/greeting";
 import { Privacy } from "./steps/privacy";
 import { OnboardingStepProps } from "./steps/types";
 import { UserInfo } from "./steps/user-info";
@@ -58,6 +59,11 @@ export function Onboarding() {
       id: 2,
       stepName: "name",
       StepComponent: UserInfo,
+    },
+    {
+      id: 3,
+      stepName: "greeting",
+      StepComponent: Greeting,
     },
   ];
 
