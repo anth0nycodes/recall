@@ -34,6 +34,10 @@ export const people = sqliteTable("people", {
 export const ingestionState = sqliteTable("ingestion_state", {
   id: integer("id").primaryKey(),
   lastRowId: integer("last_row_id").notNull().default(0),
+  // Watermark for the edit-catching pass, stored in Apple-epoch ns (same units
+  // as message.date_edited) so the compare needs no conversion. 0 = catch all
+  // edits on first run, then move forward.
+  lastEditSync: integer("last_edit_sync").notNull().default(0),
   schemaVersion: integer("schema_version").notNull().default(0),
 });
 
