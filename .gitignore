@@ -6,3 +6,5 @@ out
 .vite
 *.tsbuildinfo
 PROJECT_ARCHITECTURE.md
+CONSIDERATIONS.md
+LEARNING.md

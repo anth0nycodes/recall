@@ -1,0 +1,1 @@
+ALTER TABLE `ingestion_state` ADD `last_edit_sync` integer DEFAULT 0 NOT NULL;

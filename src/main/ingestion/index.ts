@@ -10,21 +10,7 @@ import {
   placeholderFor,
 } from "./helpers";
 import { db } from "./recall-db";
-
-interface MessageRow {
-  rowId: number;
-  guid: string;
-  text: string | null;
-  messageBuffer: Buffer;
-  isFromMe: number;
-  sentAt: number;
-  handle: string | null;
-  chatId: number;
-  attachmentMime: string | null;
-  attachmentName: string | null;
-  isReply: number;
-  isAudioMessage: number;
-}
+import type { Contact, MessageRow, Tx } from "./types";
 
 const chatDBPath = `${homedir()}/Library/Messages/chat.db`;
 const sqliteDB = new Database(chatDBPath, { readonly: true });
@@ -49,13 +35,11 @@ if (needsBackfill) {
   );
 }
 let lastRowId = needsBackfill ? 0 : (state?.lastRowId ?? 0);
+let lastEditSync = needsBackfill ? 0 : (state?.lastEditSync ?? 0);
 
-// A message is a reply when it points back to a thread originator —
-// thread_originator_guid is non-null only on replies.
-//
-// For attachments, transfer_name is the original file name we surface as
-// the message_content instead of a generic placeholder.
-const query = `
+// Both passes select the same columns; only the WHERE/ORDER BY differ, so the
+// SELECT body is shared and each pass supplies its own cursor clause.
+const selectBody = `
   SELECT
     m.ROWID AS rowId,
     m.guid,
@@ -63,6 +47,7 @@ const query = `
     m.attributedBody AS messageBuffer,
     m.is_from_me AS isFromMe,
     m.date AS sentAt,
+    m.date_edited AS dateEdited,
     h.id AS handle,
     cmj.chat_id AS chatId,
     m.is_audio_message AS isAudioMessage,
@@ -86,12 +71,27 @@ const query = `
   FROM message AS m
   LEFT JOIN handle AS h ON m.handle_id = h.ROWID
   INNER JOIN chat_message_join AS cmj ON cmj.message_id = m.ROWID
-  WHERE m.ROWID > :lastRowId
-  ORDER BY m.ROWID ASC
-  LIMIT :BATCH_SIZE
 `;
 
-const stmt = sqliteDB.prepare(query);
+// Pass A — new messages. Forward cursor on ROWID (inserts always get a higher
+// ROWID), so this only ever sees rows we haven't imported yet.
+const newMessagesStmt = sqliteDB.prepare(`
+  ${selectBody}
+  WHERE m.ROWID > :cursor
+  ORDER BY m.ROWID ASC
+  LIMIT :BATCH_SIZE
+`);
+
+// Pass B — edited messages. Edits mutate a row in place (same ROWID) and bump
+// date_edited, so the ROWID cursor never revisits them. This pass looks back
+// over old rows by date_edited instead.
+const editedMessagesStmt = sqliteDB.prepare(`
+  ${selectBody}
+  WHERE m.date_edited > :cursor
+  ORDER BY m.date_edited ASC
+  LIMIT :BATCH_SIZE
+`);
+
 const meId = findOrCreatePerson("Me");
 const unknownId = findOrCreatePerson("Unknown");
 
@@ -135,85 +135,121 @@ db.run(
 `)
 );
 
-while (true) {
-  const rows = stmt.all({ lastRowId, BATCH_SIZE }) as MessageRow[];
-  if (rows.length === 0) break;
+// Map one chat.db row into the messages table (insert new, or upsert to refresh
+// text on an existing guid).
+function ingestRow(tx: Tx, row: MessageRow) {
+  const {
+    guid,
+    text,
+    messageBuffer,
+    isFromMe,
+    sentAt,
+    handle,
+    chatId,
+    attachmentMime,
+    attachmentName,
+    isReply,
+    isAudioMessage,
+  } = row;
+  let decodedMessage: string | null;
+  try {
+    decodedMessage = messageBuffer ? decodeMessageBuffer(messageBuffer) : text;
+  } catch (error) {
+    console.warn(`Failed to decode message ${guid}, skipping:`, error);
+    return;
+  }
 
-  db.transaction((tx) => {
-    for (const row of rows) {
-      const {
-        guid,
-        text,
-        messageBuffer,
-        isFromMe,
-        sentAt,
-        handle,
-        chatId,
-        attachmentMime,
-        attachmentName,
-        isReply,
-        isAudioMessage,
-      } = row;
-      let decodedMessage: string | null;
-      try {
-        decodedMessage = messageBuffer
-          ? decodeMessageBuffer(row.messageBuffer)
-          : text;
-      } catch (error) {
-        console.warn(`Failed to decode message ${guid}, skipping:`, error);
-        continue;
-      }
-      // Apple marks attachment slots with U+FFFC ("￼"). Strip those + trim;
-      // if nothing real is left, fall back to an attachment placeholder. Use
-      // || (not ??) so an empty-after-cleaning string also triggers the fallback.
-      const cleaned = decodedMessage?.replace(/￼/g, "").trim();
-      // For attachment-only messages, prefer the original file name; fall back
-      // to a placeholder when there's no name (e.g. expired audio messages).
-      const messageContent =
-        cleaned ||
-        attachmentName ||
-        placeholderFor(attachmentMime, isAudioMessage);
-      if (!messageContent) continue;
-      const normalizedDate = convertAppleTimestampToUnix(sentAt);
-      const personId = isFromMe
-        ? meId
-        : handle
-          ? findOrCreatePerson(handle)
-          : unknownId;
-      tx.insert(messages)
-        .values({
-          guid,
-          personId,
-          chatId,
-          isFromMe: Boolean(isFromMe),
-          messageContent,
-          isReply: Boolean(isReply),
-          attachmentType: attachmentMime,
-          sentAt: normalizedDate,
-        })
-        // Upsert (not do-nothing) so a rescan refreshes derived columns on
-        // rows that already exist — this is what makes backfill work.
-        .onConflictDoUpdate({
-          target: messages.guid,
-          set: {
-            messageContent,
-            isReply: Boolean(isReply),
-            attachmentType: attachmentMime,
-          },
-        })
-        .run();
-    }
+  // Apple marks attachment slots with U+FFFC ("￼"). Strip those + trim;
+  const cleaned = decodedMessage?.replace(/￼/g, "").trim();
+  const messageContent =
+    cleaned || attachmentName || placeholderFor(attachmentMime, isAudioMessage);
+  if (!messageContent) return;
 
-    lastRowId = rows[rows.length - 1].rowId;
-    tx.insert(ingestionState)
-      .values({ id: 1, lastRowId, schemaVersion: SCHEMA_VERSION })
+  const normalizedDate = convertAppleTimestampToUnix(sentAt);
+  const personId = isFromMe
+    ? meId
+    : handle
+      ? findOrCreatePerson(handle)
+      : unknownId;
+
+  tx.insert(messages)
+    .values({
+      guid,
+      personId,
+      chatId,
+      isFromMe: Boolean(isFromMe),
+      messageContent,
+      isReply: Boolean(isReply),
+      attachmentType: attachmentMime,
+      sentAt: normalizedDate,
+    })
+    // Upsert (not do-nothing) so a rescan refreshes derived columns on
+    // rows that already exist — this is what makes backfill + edits work.
+    .onConflictDoUpdate({
+      target: messages.guid,
+      set: {
+        messageContent,
+        isReply: Boolean(isReply),
+        attachmentType: attachmentMime,
+      },
+    })
+    .run();
+}
+
+// Run one batched pass over a cursor-driven query. `nextCursor` reads the cursor
+// value off the last row of a batch; `saveCursor` persists it (inside the same
+// txn as the inserts, so a crash resumes cleanly).
+function runPass(
+  stmt: import("better-sqlite3").Statement,
+  startCursor: number,
+  nextCursor: (row: MessageRow) => number,
+  saveCursor: (tx: Tx, cursor: number) => void
+) {
+  let cursor = startCursor;
+  while (true) {
+    const rows = stmt.all({ cursor, BATCH_SIZE }) as MessageRow[];
+    if (rows.length === 0) break;
+    db.transaction((tx) => {
+      for (const row of rows) ingestRow(tx, row);
+      cursor = nextCursor(rows[rows.length - 1]);
+      saveCursor(tx, cursor);
+    });
+  }
+  return cursor;
+}
+
+// Pass A — new messages (ROWID cursor).
+lastRowId = runPass(
+  newMessagesStmt,
+  lastRowId,
+  (row) => row.rowId,
+  (tx, cursor) =>
+    tx
+      .insert(ingestionState)
+      .values({ id: 1, lastRowId: cursor, schemaVersion: SCHEMA_VERSION })
       .onConflictDoUpdate({
         target: ingestionState.id,
-        set: { lastRowId, schemaVersion: SCHEMA_VERSION },
+        set: { lastRowId: cursor, schemaVersion: SCHEMA_VERSION },
       })
-      .run();
-  });
-}
+      .run()
+);
+
+// Pass B — edited messages (date_edited cursor). Refreshes text on rows Pass A
+// already imported but can never revisit.
+lastEditSync = runPass(
+  editedMessagesStmt,
+  lastEditSync,
+  (row) => row.dateEdited,
+  (tx, cursor) =>
+    tx
+      .insert(ingestionState)
+      .values({ id: 1, lastEditSync: cursor, schemaVersion: SCHEMA_VERSION })
+      .onConflictDoUpdate({
+        target: ingestionState.id,
+        set: { lastEditSync: cursor, schemaVersion: SCHEMA_VERSION },
+      })
+      .run()
+);
 
 console.log("Ingestion completed!");
 
@@ -231,29 +267,11 @@ const allContacts = contacts.getAllContacts([
 ]) as Contact[];
 console.log(`Fetched ${allContacts.length} contacts from the address book`);
 
-// Normalize a handle for matching. chat.db stores phones as E.164
-// (+18008888888) but contacts may store national format ((800) 888-8888) —
-// strip to digits and compare the last 10 so both sides line up. Emails just
-// lowercase. Both the map keys and the lookup use this, so formats can't drift.
 const normalizeHandle = (raw: string) =>
   raw.includes("@") ? raw.toLowerCase() : raw.replace(/\D/g, "").slice(-10);
 
-interface Contact {
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  nickname: string;
-  birthday: string;
-  jobTitle: string;
-  contactImage?: Buffer;
-  phoneNumbers: string[];
-  emailAddresses: string[];
-}
-
 const contactByHandle = new Map<string, Contact>();
-// On a key collision (duplicate contacts sharing a number/email), keep the
-// richer one — prefer whichever has a contact image so a later imageless
-// duplicate can't overwrite a photo.
+
 const setContact = (key: string, contact: Contact) => {
   const existing = contactByHandle.get(key);
   if (existing?.contactImage?.length && !contact.contactImage?.length) return;
