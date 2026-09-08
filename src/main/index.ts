@@ -50,6 +50,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
+  // User API handlers
   ipcMain.handle("get-user", () => usersApi.getUser());
   ipcMain.handle(
     "update-onboarding-step",
@@ -61,6 +62,7 @@ app.whenReady().then(() => {
     (_, data: z.infer<typeof UserInfoSchema>) => usersApi.updateUserInfo(data)
   );
 
+  // System permissions API handlers
   ipcMain.handle("get-full-disk-access-status", () =>
     systemPermissionsApi.getFullDiskAccessStatus()
   );
@@ -75,7 +77,7 @@ app.whenReady().then(() => {
     systemPermissionsApi.requestContactsAccess()
   );
 
-  // The plaintext key never crosses back to the renderer — only a boolean does.
+  // API key management handlers
   ipcMain.handle("save-openrouter-api-key", (_, apiKey: string) =>
     apiKeysApi.saveOpenRouterApiKey(apiKey)
   );
