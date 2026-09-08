@@ -3,6 +3,7 @@ import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { z } from "zod";
 import { UserInfoSchema } from "../schemas/UserInfoSchema";
+import { apiKeysApi } from "./api/api-keys";
 import { systemPermissionsApi } from "./api/system-permissions";
 import { usersApi } from "./api/users";
 import { runMigrations } from "./db/db";
@@ -71,6 +72,17 @@ app.whenReady().then(() => {
   );
   ipcMain.handle("request-contacts-access", () =>
     systemPermissionsApi.requestContactsAccess()
+  );
+
+  // The plaintext key never crosses back to the renderer — only a boolean does.
+  ipcMain.handle("save-openrouter-api-key", (_, apiKey: string) =>
+    apiKeysApi.saveOpenRouterApiKey(apiKey)
+  );
+  ipcMain.handle("has-openrouter-api-key", () =>
+    apiKeysApi.hasOpenRouterApiKey()
+  );
+  ipcMain.handle("clear-openrouter-api-key", () =>
+    apiKeysApi.clearOpenRouterApiKey()
   );
 
   // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from

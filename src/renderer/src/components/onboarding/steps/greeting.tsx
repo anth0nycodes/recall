@@ -31,7 +31,7 @@ export function Greeting({ onNext, onBack }: OnboardingStepProps) {
           variant="ghost"
           className="font-geist text-muted-foreground flex items-center gap-2 px-5 py-2 text-lg"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4" aria-hidden="true" />
           <span>Back</span>
         </Button>
         <Button onClick={onNext} className="font-geist px-5 py-2 text-lg">

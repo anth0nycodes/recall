@@ -13,6 +13,9 @@ interface RecallAPI {
   requestFullDiskAccess: () => Promise<void>;
   getContactsAccessStatus: () => Promise<PermissionStatus>;
   requestContactsAccess: () => Promise<PermissionStatus>;
+  saveOpenRouterApiKey: (apiKey: string) => Promise<void>;
+  hasOpenRouterApiKey: () => Promise<boolean>;
+  clearOpenRouterApiKey: () => Promise<void>;
 }
 
 declare global {

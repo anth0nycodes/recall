@@ -4,9 +4,11 @@ import { getErrorMessage } from "@renderer/utils/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Splash } from "../splash";
 import { ProgressBar } from "./progress-bar";
+import { AllSet } from "./steps/all-set";
 import { ContactsAccess } from "./steps/contacts-access";
 import { FullDiskAccess } from "./steps/full-disk-access";
 import { Greeting } from "./steps/greeting";
+import { OpenrouterApiKey } from "./steps/openrouter-api-key";
 import { Privacy } from "./steps/privacy";
 import { OnboardingStepProps } from "./steps/types";
 import { UserInfo } from "./steps/user-info";
@@ -77,6 +79,16 @@ export function Onboarding() {
       stepName: "contacts-access",
       StepComponent: ContactsAccess,
     },
+    {
+      id: 6,
+      stepName: "openrouter-api-key",
+      StepComponent: OpenrouterApiKey,
+    },
+    {
+      id: 7,
+      stepName: "finished",
+      StepComponent: AllSet,
+    },
   ];
 
   const currentOnboardingStep = user.onboardingStep;
@@ -100,7 +112,7 @@ export function Onboarding() {
     <div className="p-4">
       <ProgressBar
         currentStep={currentStepIndex}
-        totalSteps={onboardingSteps.length}
+        totalSteps={onboardingSteps.length - 1}
       />
       <StepComponent onNext={onNext} onBack={onBack} />
     </div>

@@ -30,9 +30,19 @@ const systemPermissionsMethods = {
     ipcRenderer.invoke("request-contacts-access"),
 };
 
+const apiKeyMethods = {
+  saveOpenRouterApiKey: (apiKey: string): Promise<void> =>
+    ipcRenderer.invoke("save-openrouter-api-key", apiKey),
+  hasOpenRouterApiKey: (): Promise<boolean> =>
+    ipcRenderer.invoke("has-openrouter-api-key"),
+  clearOpenRouterApiKey: (): Promise<void> =>
+    ipcRenderer.invoke("clear-openrouter-api-key"),
+};
+
 const recallAPI = {
   ...userMethods,
   ...systemPermissionsMethods,
+  ...apiKeyMethods,
 };
 
 // Expose the API to the renderer via contextBridge (context isolation is on)
