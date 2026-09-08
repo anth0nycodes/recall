@@ -20,14 +20,6 @@ const BATCH_SIZE = 2500;
 // filled from chat.db). A stored version below this forces one full rescan so
 // old rows get backfilled; matching versions keep the fast incremental cursor.
 const SCHEMA_VERSION = 1;
-
-// Both passes select the same columns; only the WHERE/ORDER BY differ, so the
-// SELECT body is shared and each pass supplies its own cursor clause.
-//
-// A message is a reply when it points back to a thread originator —
-// thread_originator_guid is non-null only on replies. For attachments,
-// transfer_name is the original file name we surface as the message_content
-// instead of a generic placeholder.
 const selectBody = `
   SELECT
     m.ROWID AS rowId,
