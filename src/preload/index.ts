@@ -24,6 +24,7 @@ const systemPermissionsMethods = {
     ipcRenderer.invoke("get-full-disk-access-status"),
   requestFullDiskAccess: (): Promise<void> =>
     ipcRenderer.invoke("request-full-disk-access"),
+  relaunchApp: (): Promise<void> => ipcRenderer.invoke("relaunch-app"),
   getContactsAccessStatus: (): Promise<PermissionStatus> =>
     ipcRenderer.invoke("get-contacts-access-status"),
   requestContactsAccess: (): Promise<PermissionStatus> =>

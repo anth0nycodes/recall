@@ -67,6 +67,7 @@ app.whenReady().then(() => {
   ipcMain.handle("request-full-disk-access", () =>
     systemPermissionsApi.requestFullDiskAccess()
   );
+  ipcMain.handle("relaunch-app", () => systemPermissionsApi.relaunchApp());
   ipcMain.handle("get-contacts-access-status", () =>
     systemPermissionsApi.getContactsAccessStatus()
   );

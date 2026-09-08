@@ -5,6 +5,7 @@
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
+    "predev": "node scripts/patch-dev-plist.mjs",
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "build": "electron-vite build",

@@ -11,6 +11,7 @@ interface RecallAPI {
   updateUserInfo: (data: z.infer<typeof UserInfoSchema>) => Promise<void>;
   getFullDiskAccessStatus: () => Promise<PermissionStatus>;
   requestFullDiskAccess: () => Promise<void>;
+  relaunchApp: () => Promise<void>;
   getContactsAccessStatus: () => Promise<PermissionStatus>;
   requestContactsAccess: () => Promise<PermissionStatus>;
   saveOpenRouterApiKey: (apiKey: string) => Promise<void>;

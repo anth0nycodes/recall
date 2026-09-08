@@ -16,12 +16,11 @@ export function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
         aria-valuenow={currentStep}
         aria-valuemin={0}
         aria-valuemax={totalSteps}
-        className="relative h-4.5 w-full overflow-clip rounded-xl"
+        className="bg-accent relative h-4.5 w-full overflow-hidden rounded-full"
       >
-        <div className="bg-accent size-full" />
         <div
-          className="bg-primary-gradient absolute inset-0 origin-left transition-transform duration-200"
-          style={{ transform: `scaleX(${fillAmount / 100})` }}
+          className="bg-primary-gradient absolute inset-y-0 left-0 rounded-full transition-all duration-200"
+          style={{ width: `${fillAmount}%` }}
         />
       </div>
     </div>
