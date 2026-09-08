@@ -5,3 +5,5 @@ export interface User {
   onboardingStep: string;
   hasCompletedOnboarding: boolean;
 }
+
+export type PermissionStatus = "granted" | "denied" | "not-determined";

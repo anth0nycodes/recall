@@ -4,6 +4,8 @@ import { getErrorMessage } from "@renderer/utils/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Splash } from "../splash";
 import { ProgressBar } from "./progress-bar";
+import { ContactsAccess } from "./steps/contacts-access";
+import { FullDiskAccess } from "./steps/full-disk-access";
 import { Greeting } from "./steps/greeting";
 import { Privacy } from "./steps/privacy";
 import { OnboardingStepProps } from "./steps/types";
@@ -64,6 +66,16 @@ export function Onboarding() {
       id: 3,
       stepName: "greeting",
       StepComponent: Greeting,
+    },
+    {
+      id: 4,
+      stepName: "full-disk-access",
+      StepComponent: FullDiskAccess,
+    },
+    {
+      id: 5,
+      stepName: "contacts-access",
+      StepComponent: ContactsAccess,
     },
   ];
 

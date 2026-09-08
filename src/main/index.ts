@@ -3,6 +3,7 @@ import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { z } from "zod";
 import { UserInfoSchema } from "../schemas/UserInfoSchema";
+import { systemPermissionsApi } from "./api/system-permissions";
 import { usersApi } from "./api/users";
 import { runMigrations } from "./db/db";
 import { runIngestion } from "./ingestion";
@@ -57,6 +58,19 @@ app.whenReady().then(() => {
   ipcMain.handle(
     "update-user-info",
     (_, data: z.infer<typeof UserInfoSchema>) => usersApi.updateUserInfo(data)
+  );
+
+  ipcMain.handle("get-full-disk-access-status", () =>
+    systemPermissionsApi.getFullDiskAccessStatus()
+  );
+  ipcMain.handle("request-full-disk-access", () =>
+    systemPermissionsApi.requestFullDiskAccess()
+  );
+  ipcMain.handle("get-contacts-access-status", () =>
+    systemPermissionsApi.getContactsAccessStatus()
+  );
+  ipcMain.handle("request-contacts-access", () =>
+    systemPermissionsApi.requestContactsAccess()
   );
 
   // Ingestion (FDA-gated). Runs the message passes, then enriches `people` from

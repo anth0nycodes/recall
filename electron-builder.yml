@@ -17,4 +17,8 @@ mac:
   target:
     - dmg
   category: public.app-category.productivity
+  # macOS kills any process that asks for Contacts without a usage string in its
+  # Info.plist, so this key is required for requestContactsAccess() to work.
+  extendInfo:
+    NSContactsUsageDescription: Recall uses your contacts to show names instead of phone numbers and email addresses. Contact data never leaves your Mac.
 npmRebuild: false
