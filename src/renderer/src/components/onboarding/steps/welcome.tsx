@@ -5,7 +5,7 @@ export function Welcome({ onNext }: OnboardingStepProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <div className="flex flex-col items-center gap-4">
-        <span className="font-sans text-4xl font-medium">
+        <span className="text-center text-4xl font-medium">
           👋 Welcome to Recall!
         </span>
         <p className="font-geist text-muted-foreground text-center text-[20px]">

@@ -48,6 +48,11 @@ export function Onboarding() {
       stepName: "welcome",
       StepComponent: Welcome,
     },
+    {
+      id: 1,
+      stepName: "privacy",
+      StepComponent: Privacy,
+    },
   ];
 
   const currentOnboardingStep = user.onboardingStep;

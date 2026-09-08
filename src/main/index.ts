@@ -12,6 +12,7 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
+      // TODO: make sure to disable devtools in the future for production
       preload: join(import.meta.dirname, "../preload/index.mjs"),
       sandbox: false,
     },
