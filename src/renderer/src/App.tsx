@@ -1,28 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
-import { usersApi } from "./api/users";
-import { ErrorScreen } from "./components/error-screen";
-import { Home } from "./components/home";
-import { Onboarding } from "./components/onboarding/onboarding";
-import { Splash } from "./components/splash";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Layout } from "./layout";
+import { NewChat } from "./routes";
+import { Onboarding } from "./routes/onboarding";
 
 function App() {
-  const {
-    data: user,
-    isPending,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: () => usersApi.getUser(),
-  });
-
-  if (isPending) return <Splash />;
-  if (isError) return <ErrorScreen onRetry={() => refetch()} />;
-
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-6">
-      {user.hasCompletedOnboarding ? <Home /> : <Onboarding />}
-    </div>
+    <HashRouter>
+      <Routes>
+        {/* All routes inside inherit the Layout wrapper */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<NewChat />} />
+        </Route>
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </HashRouter>
   );
 }
 

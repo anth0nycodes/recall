@@ -16,6 +16,7 @@
 @theme {
   --font-sans: "DM Sans", sans-serif;
   --font-geist: "Geist", sans-serif;
+  --ease-sidebar: cubic-bezier(0.45, 0.75, 0.43, 1);
 }
 
 :root {
@@ -28,7 +29,7 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-gradient-from: #b5fb5f;
-  --primary-gradient-via: #31e033;
+  --primary-gradient-via: #3af033;
   --primary-gradient-to: #07e689;
   --primary-gradient: linear-gradient(
     to bottom,
