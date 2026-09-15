@@ -16,6 +16,14 @@ export function Sidebar() {
 
   useEffect(() => {
     function toggleSidebar(e: KeyboardEvent) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return;
+      }
+
       if ((e.ctrlKey && e.key === "b") || (e.metaKey && e.key === "b")) {
         setOpen((prev) => !prev);
       }
