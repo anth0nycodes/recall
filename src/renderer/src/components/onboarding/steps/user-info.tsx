@@ -30,7 +30,7 @@ export function UserInfo({ onNext }: OnboardingStepProps) {
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error);
-      throw new Error(`Failed to update user info: ${errorMessage}`);
+      console.error(`Failed to update user info: ${errorMessage}`);
     },
   });
 

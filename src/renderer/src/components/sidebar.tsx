@@ -25,7 +25,8 @@ export function Sidebar() {
         return;
       }
 
-      if ((e.ctrlKey && e.key === "b") || (e.metaKey && e.key === "b")) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        e.preventDefault();
         setOpen((prev) => !prev);
       }
     }
@@ -37,8 +38,9 @@ export function Sidebar() {
   function renderSidebarContent() {
     if (open) {
       return (
-        <div
+        <motion.div
           key="open"
+          {...(prefersReducedMotion ? {} : { ...fade })}
           className="col-start-1 row-start-1 flex items-center justify-between"
         >
           <div className="flex shrink-0 items-center gap-2 pl-2">
@@ -53,7 +55,7 @@ export function Sidebar() {
             </motion.span>
           </div>
           <SidebarToggle open={open} setOpen={setOpen} />
-        </div>
+        </motion.div>
       );
     }
 
@@ -107,7 +109,7 @@ function SidebarToggle({ open, setOpen }: SidebarToggleProps) {
               "hover:bg-accent group h-max shrink-0 rounded-md p-2",
               open ? "cursor-w-resize" : "cursor-e-resize"
             )}
-            aria-label="Toggle sidebar button"
+            aria-label="Toggle sidebar"
           >
             <span className="grid size-5 place-items-center">
               <PanelLeft

@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { usersApi } from "@renderer/api/users";
 import { getErrorMessage } from "@renderer/utils/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,21 +34,25 @@ export function Onboarding() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user"] }),
     onError: (error) => {
       const errorMessage = getErrorMessage(error);
-      throw new Error(`Failed to update onboarding step: ${errorMessage}`);
+      console.error(`Failed to update onboarding step: ${errorMessage}`);
     },
   });
 
   const finishOnboarding = useMutation({
     mutationFn: (stepName: string) =>
       usersApi.updateOnboardingStep(stepName, true),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user"] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      navigate("/", { replace: true });
+    },
     onError: (error) => {
       const errorMessage = getErrorMessage(error);
-      throw new Error(`Failed to finish onboarding: ${errorMessage}`);
+      console.error(`Failed to finish onboarding: ${errorMessage}`);
     },
   });
 
   if (!user) return <Splash />;
+  if (user.hasCompletedOnboarding) return <Navigate to="/" replace />;
 
   const onboardingSteps: OnboardingStep[] = [
     {
@@ -104,14 +108,7 @@ export function Onboarding() {
     const lastStep = onboardingSteps[onboardingSteps.length - 1];
     if (nextStep) updateStep.mutate(nextStep.stepName);
     if (currentOnboardingStep === lastStep.stepName) {
-      try {
-        finishOnboarding.mutate("finished");
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error(`Failed to finish onboarding: ${errorMessage}`);
-      } finally {
-        navigate("/");
-      }
+      finishOnboarding.mutate("finished");
     }
   }
 

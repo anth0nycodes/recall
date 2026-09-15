@@ -1,4 +1,4 @@
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./layout";
 import { NewChat } from "./routes";
 import { Onboarding } from "./routes/onboarding";
@@ -12,6 +12,7 @@ function App() {
           <Route index element={<NewChat />} />
         </Route>
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { usersApi } from "./api/users";
 import { ErrorScreen } from "./components/error-screen";
@@ -7,7 +7,6 @@ import { Splash } from "./components/splash";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 export function Layout() {
-  const navigate = useNavigate();
   const {
     data: user,
     isPending,
@@ -22,7 +21,7 @@ export function Layout() {
   if (isError) return <ErrorScreen onRetry={() => refetch()} />;
 
   if (!user.hasCompletedOnboarding) {
-    navigate("/onboarding");
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (

@@ -25,7 +25,7 @@ export function OpenrouterApiKey({ onNext }: OnboardingStepProps) {
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error);
-      throw new Error(`Failed to save API key: ${errorMessage}`);
+      console.error(`Failed to save API key: ${errorMessage}`);
     },
   });
 
