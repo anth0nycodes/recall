@@ -42,6 +42,7 @@
     "react-dom": "^19.2.8",
     "react-error-boundary": "^6.1.5",
     "react-hook-form": "^7.87.0",
+    "react-router-dom": "^7.18.3",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.5.4"
   },
