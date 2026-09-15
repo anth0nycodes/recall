@@ -1,7 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { cn } from "cn";
 import { PanelLeft } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { RecallIcon } from "./svgs/recall-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -13,6 +13,7 @@ const fade = {
 
 export function Sidebar() {
   const [open, setOpen] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     function toggleSidebar(e: KeyboardEvent) {
@@ -43,8 +44,9 @@ export function Sidebar() {
           <div className="flex shrink-0 items-center gap-2 pl-2">
             <RecallIcon size={20} />
             <motion.span
-              initial={{ opacity: 0 }}
-              {...fade}
+              {...(prefersReducedMotion
+                ? {}
+                : { initial: { opacity: 0 }, ...fade })}
               className="text-[22px] font-semibold whitespace-nowrap"
             >
               recall
