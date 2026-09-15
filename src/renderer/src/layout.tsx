@@ -4,6 +4,7 @@ import { usersApi } from "./api/users";
 import { ErrorScreen } from "./components/error-screen";
 import { Sidebar } from "./components/sidebar";
 import { Splash } from "./components/splash";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export function Layout() {
   const navigate = useNavigate();
@@ -25,13 +26,13 @@ export function Layout() {
   }
 
   return (
-    <div className="flex h-screen w-screen">
-      <div className="flex flex-1 overflow-hidden">
+    <TooltipProvider>
+      <div className="flex h-screen">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-neutral-900 p-6 text-white">
+        <main className="flex-1 p-4">
           <Outlet />
         </main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

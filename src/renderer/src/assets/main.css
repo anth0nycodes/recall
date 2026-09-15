@@ -16,6 +16,7 @@
 @theme {
   --font-sans: "DM Sans", sans-serif;
   --font-geist: "Geist", sans-serif;
+  --ease-sidebar: cubic-bezier(0.45, 0.75, 0.43, 1);
 }
 
 :root {
