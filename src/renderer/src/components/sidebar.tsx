@@ -58,7 +58,11 @@ export function Sidebar() {
     }
 
     return (
-      <motion.div key="closed" {...fade} className="col-start-1 row-start-1">
+      <motion.div
+        key="closed"
+        {...(prefersReducedMotion ? {} : { ...fade })}
+        className="col-start-1 row-start-1"
+      >
         <SidebarToggle open={open} setOpen={setOpen} />
       </motion.div>
     );
