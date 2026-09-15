@@ -193,9 +193,9 @@ export function RecallIcon({ size = 32, ...props }: RecallIconProps) {
           y2="32"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#B5FB5F" />
-          <stop offset="0.5" stopColor="#3AF033" />
-          <stop offset="1" stopColor="#07E689" />
+          <stop stopColor="var(--primary-gradient-from)" />
+          <stop offset="0.5" stopColor="var(--primary-gradient-via)" />
+          <stop offset="1" stopColor="var(--primary-gradient-to)" />
         </linearGradient>
       </defs>
     </svg>
