@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { usersApi } from "./api/users";
 import { ErrorScreen } from "./components/error-screen";
-import { SearchBar } from "./components/searchbar";
+import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
 import { Splash } from "./components/splash";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -30,7 +30,7 @@ export function Layout() {
       <div className="flex h-screen">
         <Sidebar />
         <main className="relative flex-1 p-4">
-          <SearchBar />
+          <Header user={user} />
           <Outlet />
         </main>
       </div>
