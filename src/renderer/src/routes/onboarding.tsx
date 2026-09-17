@@ -124,7 +124,7 @@ export function Onboarding() {
           currentStep={currentStepIndex}
           totalSteps={onboardingSteps.length - 1}
         />
-        <StepComponent onNext={onNext} onBack={onBack} />
+        <StepComponent user={user} onNext={onNext} onBack={onBack} />
       </div>
     </div>
   );
