@@ -5,7 +5,7 @@ import { z } from "zod";
 import { UserInfoSchema } from "../schemas/UserInfoSchema";
 import { apiKeysApi } from "./api/api-keys";
 import { systemPermissionsApi } from "./api/system-permissions";
-import { usersApi } from "./api/users";
+import { seedUser, usersApi } from "./api/users";
 import { runMigrations } from "./db/db";
 import { runIngestion } from "./ingestion";
 
@@ -13,6 +13,8 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    minWidth: 900,
+    minHeight: 670,
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -95,6 +97,7 @@ app.whenReady().then(() => {
 
   // Apply pending DB migrations before any window/query runs.
   runMigrations();
+  seedUser();
 
   createWindow();
 
