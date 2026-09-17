@@ -1,19 +1,9 @@
-import { usersApi } from "@renderer/api/users";
-import { Splash } from "@renderer/components/splash";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { OnboardingButton } from "../onboarding-button";
 import { StepLayout } from "../step-layout";
 import { OnboardingStepProps } from "./types";
 
-export function Greeting({ onNext, onBack }: OnboardingStepProps) {
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: () => usersApi.getUser(),
-  });
-
-  if (!user) return <Splash />;
-
+export function Greeting({ user, onNext, onBack }: OnboardingStepProps) {
   return (
     <StepLayout
       title={`Nice to meet you ${user.firstName}!`}
