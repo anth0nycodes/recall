@@ -73,7 +73,7 @@ export function Sidebar() {
   return (
     <div
       className={cn(
-        "border-accent flex shrink-0 flex-col overflow-hidden border-2 p-2",
+        "border-accent flex shrink-0 flex-col overflow-hidden border-3 p-2",
         "ease-sidebar transition-[width] duration-300 motion-reduce:transition-none",
         open ? "w-65" : "w-14"
       )}
@@ -133,7 +133,7 @@ function SidebarToggle({ open, setOpen }: SidebarToggleProps) {
         }
       />
       <TooltipContent
-        className="bg-background border-accent rounded-full border-2 py-1"
+        className="bg-background border-accent rounded-full border-3 py-1"
         side={open ? "bottom" : "right"}
         sideOffset={open ? 6 : 16}
       >
