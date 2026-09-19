@@ -40,15 +40,19 @@ export const usersApi = {
         })
         .where(eq(users.id, 1))
         .run();
-      // TODO: no-op today — the "Me" row is only created by ingestion
-      // (ingestion/index.ts findOrCreatePerson("Me")), which runs after the
-      // onboarding name step, so this matches zero rows.
-      tx.update(people)
-        .set({
+      tx.insert(people)
+        .values({
+          handle: "Me",
           firstName,
           lastName,
         })
-        .where(eq(people.handle, "Me"))
+        .onConflictDoUpdate({
+          target: people.handle,
+          set: {
+            firstName,
+            lastName,
+          },
+        })
         .run();
     });
   },
